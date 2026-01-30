@@ -1,0 +1,22 @@
+The project is related to Falaise simulations tutorial
+
+To run simulation:
+1. run ./main
+2. choose isotope (its configuration is located in /sps/nemo/scratch/ktrofimi/Attempt/Isotopes_configurations), there are just four options : Se82_0nubb, Se82_2nubb, Bi214 or Tl208
+3. choose number of events to simulate
+4. choose the name of simulation folder
+5. choose number of files
+
+when simulations will be over, we can check efficiencies by running ./Analyze.sh:
+1. run ./Analyze.sh
+2. choose folder
+3. choose number of files
+
+now this script doesn't work because of libssl.so.10
+
+and also: folder "whaa" contains simulations with new version of Falaise, so it should work
+
+to recompile Analyze_total: 
+
+    $module load gcc 
+    $g++ -o Analyze_total Analyze_total.cpp $(root-config --cflags --libs)
