@@ -1,0 +1,15 @@
+What you can try is this:
+
+1. Start in new fresh folder
+2. Clone this git repository: https://github.com/SuperNEMO-DBD/Commissioning
+3. Follow the exact instructions from the repository with one exception - the command "source setup_ccin2p3.sh" is obsolete and loads wrong versions of the software. You replace this by these two commands:
+      source ${THRONG_DIR}/config/supernemo_profile.bash
+      snswmgr_load_stack falaise@2026-02-09
+4. You continue with building until you have build/read_red compiled successfully.
+5. The line "build/read_red -i $RED_PATH/snemo_run-612_red.data.gz" is also bit obsolete because we have not better data path to use. So I would apply this to data from this folder: /sps/nemo/snemo/snemo_data/raw_data/RED/delta-tdc-1600us-v3, you can do so by running read_red with the command:
+
+./read_red -i /sps/nemo/snemo/snemo_data/raw_data/RED/delta-tdc-1600us-v3/snemo_run-2011_red.data.gz
+
+I have put run 2011 because I know it and it is not so important now which run. I just want to have under control that I know which run we are playing with. Later we can also use all of them.
+6. After you run it, the program is not doing much - it's just showing some things from data. But this is exactly its point because you can open its source code "read_red.cxx" and understand what comes from where . You can also try to print out some other things. And we have also possibility to open these runs in flvisualize (not in RED format but that I can tell you later how if we would need). If you make changes, do not forget to recompile it again and then run (it's a good advice from my experience :smile: ).
+7. There is lot of stuff and you might be confused what these things are for (these are still relatively raw data from the detector and we can also discuss what they mean). But luckily we are interested only in specific thing - waveforms. You have OM hit which collects charge and it has its specific profile (see Khrystyna's presentation). Each time something hits OM you have this waveform. The very first task would be - to try to read and plot it. I am not 100% sure but I believe you find it in read_red.cxx on line 120: 	  const std::vector<int16_t> & waveform = red_calo_hit.get_waveform(); I believe if you would read this vector and plot it as a histogram/TGraph you would get a nice waveform - this is for you to try, I don't remember if it was this simple. (edited)
