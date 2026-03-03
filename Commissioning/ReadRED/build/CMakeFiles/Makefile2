@@ -63,6 +63,7 @@ CMAKE_BINARY_DIR = /sps/nemo/scratch/ikovalen/OM_waveform_fitting/Commissioning/
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
+all: CMakeFiles/extract_waveforms.dir/all
 all: CMakeFiles/read_red.dir/all
 all: CMakeFiles/show_red.dir/all
 .PHONY : all
@@ -72,9 +73,36 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
+clean: CMakeFiles/extract_waveforms.dir/clean
 clean: CMakeFiles/read_red.dir/clean
 clean: CMakeFiles/show_red.dir/clean
 .PHONY : clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/extract_waveforms.dir
+
+# All Build rule for target.
+CMakeFiles/extract_waveforms.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/extract_waveforms.dir/build.make CMakeFiles/extract_waveforms.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/extract_waveforms.dir/build.make CMakeFiles/extract_waveforms.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/sps/nemo/scratch/ikovalen/OM_waveform_fitting/Commissioning/ReadRED/build/CMakeFiles --progress-num=1,2 "Built target extract_waveforms"
+.PHONY : CMakeFiles/extract_waveforms.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/extract_waveforms.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /sps/nemo/scratch/ikovalen/OM_waveform_fitting/Commissioning/ReadRED/build/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/extract_waveforms.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /sps/nemo/scratch/ikovalen/OM_waveform_fitting/Commissioning/ReadRED/build/CMakeFiles 0
+.PHONY : CMakeFiles/extract_waveforms.dir/rule
+
+# Convenience name for target.
+extract_waveforms: CMakeFiles/extract_waveforms.dir/rule
+.PHONY : extract_waveforms
+
+# clean rule for target.
+CMakeFiles/extract_waveforms.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/extract_waveforms.dir/build.make CMakeFiles/extract_waveforms.dir/clean
+.PHONY : CMakeFiles/extract_waveforms.dir/clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/read_red.dir
@@ -83,7 +111,7 @@ clean: CMakeFiles/show_red.dir/clean
 CMakeFiles/read_red.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/read_red.dir/build.make CMakeFiles/read_red.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/read_red.dir/build.make CMakeFiles/read_red.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/sps/nemo/scratch/ikovalen/OM_waveform_fitting/Commissioning/ReadRED/build/CMakeFiles --progress-num=1,2 "Built target read_red"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/sps/nemo/scratch/ikovalen/OM_waveform_fitting/Commissioning/ReadRED/build/CMakeFiles --progress-num=3,4 "Built target read_red"
 .PHONY : CMakeFiles/read_red.dir/all
 
 # Build rule for subdir invocation for target.
@@ -109,7 +137,7 @@ CMakeFiles/read_red.dir/clean:
 CMakeFiles/show_red.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/show_red.dir/build.make CMakeFiles/show_red.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/show_red.dir/build.make CMakeFiles/show_red.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/sps/nemo/scratch/ikovalen/OM_waveform_fitting/Commissioning/ReadRED/build/CMakeFiles --progress-num=3,4 "Built target show_red"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/sps/nemo/scratch/ikovalen/OM_waveform_fitting/Commissioning/ReadRED/build/CMakeFiles --progress-num=5,6 "Built target show_red"
 .PHONY : CMakeFiles/show_red.dir/all
 
 # Build rule for subdir invocation for target.

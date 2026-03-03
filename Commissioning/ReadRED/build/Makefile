@@ -117,6 +117,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named extract_waveforms
+
+# Build rule for target.
+extract_waveforms: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 extract_waveforms
+.PHONY : extract_waveforms
+
+# fast build rule for target.
+extract_waveforms/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/extract_waveforms.dir/build.make CMakeFiles/extract_waveforms.dir/build
+.PHONY : extract_waveforms/fast
+
+#=============================================================================
 # Target rules for targets named read_red
 
 # Build rule for target.
@@ -141,6 +154,30 @@ show_red: cmake_check_build_system
 show_red/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/show_red.dir/build.make CMakeFiles/show_red.dir/build
 .PHONY : show_red/fast
+
+extract_waveforms.o: extract_waveforms.cxx.o
+.PHONY : extract_waveforms.o
+
+# target to build an object file
+extract_waveforms.cxx.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/extract_waveforms.dir/build.make CMakeFiles/extract_waveforms.dir/extract_waveforms.cxx.o
+.PHONY : extract_waveforms.cxx.o
+
+extract_waveforms.i: extract_waveforms.cxx.i
+.PHONY : extract_waveforms.i
+
+# target to preprocess a source file
+extract_waveforms.cxx.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/extract_waveforms.dir/build.make CMakeFiles/extract_waveforms.dir/extract_waveforms.cxx.i
+.PHONY : extract_waveforms.cxx.i
+
+extract_waveforms.s: extract_waveforms.cxx.s
+.PHONY : extract_waveforms.s
+
+# target to generate assembly for a file
+extract_waveforms.cxx.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/extract_waveforms.dir/build.make CMakeFiles/extract_waveforms.dir/extract_waveforms.cxx.s
+.PHONY : extract_waveforms.cxx.s
 
 read_red.o: read_red.cxx.o
 .PHONY : read_red.o
@@ -198,8 +235,12 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... extract_waveforms"
 	@echo "... read_red"
 	@echo "... show_red"
+	@echo "... extract_waveforms.o"
+	@echo "... extract_waveforms.i"
+	@echo "... extract_waveforms.s"
 	@echo "... read_red.o"
 	@echo "... read_red.i"
 	@echo "... read_red.s"
