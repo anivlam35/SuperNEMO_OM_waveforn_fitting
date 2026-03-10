@@ -1,44 +1,57 @@
 #include <TFile.h>
 #include <TTree.h>
 #include <TGraph.h>
+#include <TCanvas.h>
 #include <vector>
 #include <iostream>
 
 int main() {
 
     // Відкрити вхідний файл
-    TFile *fin = new TFile("waveforms.root", "READ");
-    TTree *t = (TTree*)fin->Get("t");
+    TFile *fin = new TFile("./build/waveforms.root", "READ");
+    TTree *tree = (TTree*)fin->Get("t");
 
     // Підключити гілку
-    std::vector<short>* wf = nullptr;
-    t->SetBranchAddress("waveform", &wf);
+    int run, event, om;
+    std::vector<double>* waveform = nullptr;
 
-    // Створити вихідний файл
-    TFile *fout = new TFile("graphs.root", "RECREATE");
+    tree->SetBranchAddress("run_id", &run);
+    tree->SetBranchAddress("event_id", &event);
+    // tree->SetBranchAddress("om_id", &om);
+    tree->SetBranchAddress("waveform", &waveform);
 
-    int nEntries = t->GetEntries();
+    TCanvas canvas("c","c",800,600);
+
+    int nEntries = tree->GetEntries();
 
     for (int i = 0; i < nEntries; i++) {
 
-        t->GetEntry(i);
+        tree->GetEntry(i);
 
-        // Створити графік
-        TGraph *g = new TGraph(wf->size());
+        int n = waveform->size();
 
-        for (int j = 0; j < wf->size(); j++)
-            g->SetPoint(j, j, (*wf)[j]);
+        TGraph graph(n);
 
-        // Унікальне ім’я
-        g->SetName(Form("waveform_%d", i));
-        g->SetTitle(Form("Waveform %d", i));
+        for (int j = 0; j < n; j++) {
+            double timestamp = j * 6.25E-9;
+            graph.SetPoint(j, timestamp, waveform->at(j));
+        }
 
-        g->Write();   // записати в файл
+        graph.SetTitle("Waveform;Time;Amplitude");
+        graph.Draw("AL");
 
-        delete g;     // щоб не текла пам’ять
+        std::string filename = "Histos/Waveform_run" +
+                                std::to_string(run) +
+                                "_event" +
+                                std::to_string(event) +
+                                // "_om" +
+                                // std::to_string(om) +
+                                std::to_string(i) +
+                                ".png";
+
+        canvas.SaveAs(filename.c_str());
     }
 
-    fout->Close();
     fin->Close();
 
     std::cout << "Saved " << nEntries << " graphs\n";

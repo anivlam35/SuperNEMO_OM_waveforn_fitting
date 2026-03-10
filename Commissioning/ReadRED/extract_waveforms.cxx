@@ -83,12 +83,18 @@ int main (int argc, char *argv[])
   // Waveform
   std::vector<int16_t> waveform;
 
+  // High and low thresholds
+  int ht, lt;
+
   // File initialization
   TFile *file = new TFile("waveforms.root", "RECREATE");
   TTree *tree = new TTree("t", "Calo waveforms");
 
   tree->Branch("run_id", &red_run_id);
   tree->Branch("event_id", &red_event_id);
+  tree->Branch("om_id", &om_id);
+  tree->Branch("high_threshold", &ht);
+  tree->Branch("low_threshold", &lt);
   tree->Branch("waveform", &waveform);
 
   while (red_source.has_record_tag() && (waveform_counter < WAVEFORMS_NEEDED))
@@ -131,6 +137,8 @@ int main (int argc, char *argv[])
 
 		// OM ID from SNCabling
 		om_id = red_calo_hit.get_om_id();
+    ht = (int)red_calo_hit.is_high_threshold();
+    lt = (int)red_calo_hit.is_low_threshold_only();
 		// om_id.is_main(), om_id.get_side(), etc. => see sncabling method's
 
 		// Reference time (TDC)
