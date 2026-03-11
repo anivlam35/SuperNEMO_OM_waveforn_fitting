@@ -78,13 +78,13 @@ int main (int argc, char *argv[])
   int32_t red_event_id;
 
   // OM id
-  sncabling::om_id om_id;
+  int16_t om_num;
 
   // Waveform
   std::vector<int16_t> waveform;
 
   // High and low thresholds
-  int ht, lt;
+  int32_t ht, lt;
 
   // File initialization
   TFile *file = new TFile("waveforms.root", "RECREATE");
@@ -92,12 +92,12 @@ int main (int argc, char *argv[])
 
   tree->Branch("run_id", &red_run_id);
   tree->Branch("event_id", &red_event_id);
-  tree->Branch("om_id", &om_id);
+  tree->Branch("om_num", &om_num);
   tree->Branch("high_threshold", &ht);
   tree->Branch("low_threshold", &lt);
   tree->Branch("waveform", &waveform);
 
-  while (red_source.has_record_tag() && (waveform_counter < WAVEFORMS_NEEDED))
+  while (red_source.has_record_tag())
     {
       // Check the serialization tag of the next record:
       DT_THROW_IF(!red_source.record_tag_is(snfee::data::raw_event_data::SERIAL_TAG),
@@ -129,16 +129,39 @@ int main (int argc, char *argv[])
       // Scan calo hits
       for (const snfee::data::calo_digitized_hit & red_calo_hit : red_calo_hits)
 		{
-		if (waveform_counter >= WAVEFORMS_NEEDED) break;
+		// if (waveform_counter >= WAVEFORMS_NEEDED) break;
 		// Origin of the hit in RTD file
 		// const snfee::data::calo_digitized_hit::rtd_origin & origin = red_calo_hit.get_origin();
 		// origin.get_trigger_id()
 		// origin.get_hit_number()
 
 		// OM ID from SNCabling
-		om_id = red_calo_hit.get_om_id();
-    ht = (int)red_calo_hit.is_high_threshold();
-    lt = (int)red_calo_hit.is_low_threshold_only();
+		sncabling::om_id om_id = red_calo_hit.get_om_id();
+		int om_side, om_wall, om_column, om_row;
+		if(om_id.is_main())
+		{
+			om_side   = om_id.get_side();
+			om_column = om_id.get_column();
+			om_row    = om_id.get_row();
+			om_num = om_side*20*13 + om_column*13 + om_row;
+		}
+		else if(om_id.is_xwall())
+		{
+			om_side   = om_id.get_side();
+			om_wall   = om_id.get_wall();
+			om_column = om_id.get_column();
+			om_row    = om_id.get_row();
+			om_num = 520 + om_side*64 +  om_wall*32 + om_column*16 + om_row;
+		}
+		else if(om_id.is_gveto())
+		{
+			om_side = om_id.get_side();
+			om_wall = om_id.get_wall();
+			om_column = om_id.get_column();
+			om_num = 520 + 128 + om_side*32 + om_wall*16 + om_column;
+		}
+ 	   	ht = (int)red_calo_hit.is_high_threshold();
+    		lt = (int)red_calo_hit.is_low_threshold_only();
 		// om_id.is_main(), om_id.get_side(), etc. => see sncabling method's
 
 		// Reference time (TDC)
