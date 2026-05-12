@@ -12,12 +12,15 @@ int main() {
     TTree *tree = (TTree*)fin->Get("t");
 
     // Підключити гілку
-    int run, event, om;
+    int16_t om_num;
+    int32_t run, event, ht, lt;
     std::vector<double>* waveform = nullptr;
 
     tree->SetBranchAddress("run_id", &run);
     tree->SetBranchAddress("event_id", &event);
-    // tree->SetBranchAddress("om_id", &om);
+    tree->SetBranchAddress("om_num", &om_num);
+    tree->SetBranchAddress("high_threshold", &ht);
+    tree->SetBranchAddress("low_threshold", &lt);
     tree->SetBranchAddress("waveform", &waveform);
 
     TCanvas canvas("c","c",800,600);
@@ -40,12 +43,17 @@ int main() {
         graph.SetTitle("Waveform;Time;Amplitude");
         graph.Draw("AL");
 
-        std::string filename = "Histos/Waveform_run" +
+        std::string filename = "./build/Histos/Waveform_run" +
                                 std::to_string(run) +
                                 "_event" +
                                 std::to_string(event) +
-                                // "_om" +
-                                // std::to_string(om) +
+                                "_om_num" +
+                                std::to_string(om_num) +
+                                "_ht_" +
+                                std::to_string(ht) +       
+                                "_lt_" +
+                                std::to_string(lt) +
+                                "_" +
                                 std::to_string(i) +
                                 ".png";
 
