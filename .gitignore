@@ -1,2 +1,6 @@
 *.root
 build/
+Commissioning/ReadRED/build/
+*.root
+*.root
+*.gch
