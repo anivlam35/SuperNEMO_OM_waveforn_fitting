@@ -1,56 +1,86 @@
 #include <TFile.h>
 #include <TTree.h>
-#include <TH2.h>
-#include <TF1.h>
-#include <TStyle.h>
-#include <TCanvas.h>
-#include <vector>
+
 #include <iostream>
-#include <unordered_map>
-#include <fstream>
-#include <TKey.h>
-#include <TLine.h>
-#include <TGraph.h>
-#include <filesystem>
-#include <TLegend.h>
-#include "BLlib.h"
+#include <vector>
 #include <algorithm>
+#include <cmath>
+
 #include <omp.h>
 
+#include "BLlibGPT.h"
+
+#include <ROOT/TThreadExecutor.hxx>
+#include <ROOT/RDataFrame.hxx>
+#include <ROOT/RLogger.hxx>
+
+#include <chrono>
+
 int main() {
+    auto start = std::chrono::high_resolution_clock::now();
 
-    TFile *fout = new TFile("./build/SBLs.root", "RECREATE");
+    ROOT::EnableThreadSafety();
 
-    fout->cd();
+    TFile warmup("./build/sorted_by_OM.root", "READ");
+    TTree *tmp = nullptr;
+    warmup.GetObject("t_om_0", tmp);
+    warmup.Close();
 
-    TTree *SBL_tree = new TTree("SBL_tree", "OM sample baselines");
-
-    int om_num;
-    double bl[1024];
-
-    SBL_tree->Branch("om", &om_num);
-    SBL_tree->Branch("baseline", bl, "baseline[1024]/D");
+    std::vector<TTree*> outputTrees;
 
     #pragma omp parallel for schedule(dynamic)
-    for (int om = 0; om < 19; om++){
-        TFile *fin_local = new TFile("./build/sorted_by_OM.root", "READ");
+    for (int om_num = 0; om_num < 712; om_num++) {
 
-        TTree *tree = nullptr;
-        #pragma omp critical
-        {
-            fin_local->GetObject(Form("t_om_%d", om), tree);
-        }
+        // thread-local file
+        TFile *fin =
+            TFile::Open(
+                "./build/sorted_by_OM.root",
+                "READ"
+            );
 
-        if (!tree) {
+        if (!fin || fin->IsZombie()) {
+
             #pragma omp critical
-            std::cout << "Tree not found\n";
+            {
+                std::cout
+                    << "Cannot open input file\n";
+            }
+
             continue;
         }
-    
-        int32_t run, event, ht, lt;
+
+        TTree *tree = nullptr;
+
+        fin->GetObject(
+            Form("t_om_%d", om_num),
+            tree
+        );
+
+        if (!tree) {
+
+            #pragma omp critical
+            {
+                std::cout
+                    << "Tree not found: "
+                    << om_num
+                    << "\n";
+            }
+
+            fin->Close();
+            delete fin;
+
+            continue;
+        }
+
+        int32_t run = 0;
+        int32_t event = 0;
+        int32_t ht = 0;
+        int32_t lt = 0;
+
         std::vector<int16_t>* waveform = nullptr;
 
         tree->SetBranchStatus("*", 0);
+
         tree->SetBranchStatus("run_id", 1);
         tree->SetBranchStatus("event_id", 1);
         tree->SetBranchStatus("high_threshold", 1);
@@ -62,37 +92,87 @@ int main() {
         tree->SetBranchAddress("high_threshold", &ht);
         tree->SetBranchAddress("low_threshold", &lt);
         tree->SetBranchAddress("waveform", &waveform);
-    
-        double local_bl[1024] = {0};
+
+
+
+        TTree *SBL_tree =
+            new TTree(Form("SBL_OM%d", om_num),
+                    Form("OM%d sample baselines", om_num));
+        SBL_tree->SetDirectory(nullptr);
+
+        double bl[1024];
+
+        SBL_tree->Branch(
+            "baseline",
+            bl,
+            "baseline[1024]/D"
+        );
+
+        double local_bl[1024];
 
         bool skipOM = false;
-        for(int sample = 0; sample < 1024; sample++){
-            local_bl[sample] = get_sample_baseline(
-                tree,
-                sample,
-                ht,
-                lt,
-                waveform
-            );
+        for (int sample = 0; sample < 1024; sample++) {
+
+            local_bl[sample] =
+                get_sample_baseline(
+                    tree,
+                    sample,
+                    ht,
+                    lt,
+                    waveform
+                );
 
             if (std::isnan(local_bl[sample])) {
                 skipOM = true;
-                break;  // выходим из sample loop
+                break;
             }
         }
-        if (skipOM) continue;
-        #pragma omp critical 
-        {
-            om_num = om;
-            std::copy(local_bl, local_bl + 1024, bl);
-            SBL_tree->Fill();
+
+        if (!skipOM) {
+
+            #pragma omp critical
+            {
+                std::copy(
+                    local_bl,
+                    local_bl + 1024,
+                    bl
+                );
+
+                SBL_tree->Fill();
+                outputTrees.push_back(SBL_tree);
+            }
         }
-        
-        fin_local->Close();
-        delete fin_local;
+
+        fin->Close();
+        delete fin;
+
+        std::cout << "OM" << om_num << " SBLs extracted.\n"; 
     }
 
-    SBL_tree->Write();
-    fout->Close();
-}
+    
+    TFile fout("./build/SBLs.root", "RECREATE");
 
+    for (auto tree : outputTrees) {
+
+        fout.cd();
+
+        tree->Write();
+
+        delete tree;
+    }
+
+    fout.Close();
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            end - start
+        );
+
+    std::cout << "Execution time: "
+            << duration.count()
+            << " ms\n";
+
+    return 0;
+}

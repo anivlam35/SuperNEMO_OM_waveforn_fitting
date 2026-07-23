@@ -1,0 +1,1998 @@
+===== 2D_baselines_subBL.cpp =====
+#include <TFile.h>
+#include <TTree.h>
+#include <TH2.h>
+#include <TF1.h>
+#include <TStyle.h>
+#include <TCanvas.h>
+#include <vector>
+#include <iostream>
+#include <unordered_map>
+#include <fstream>
+#include <TKey.h>
+
+int main() {
+            // Reading baselines
+    std::ifstream in("OM_baselines_sorted.txt");
+
+    std::map<int16_t, double> baselines;
+
+    std::string header;
+    std::getline(in, header);
+
+    int16_t om_num;
+    double mean, sigma;
+
+    while (in >> om_num >> mean >> sigma) {
+        baselines[om_num] = mean;
+    }
+
+    in.close();
+
+    TFile *fin = new TFile("./build/sorted_by_OM.root", "READ");
+
+    TIter next(fin->GetListOfKeys());
+    TKey *key;
+
+    std::map<int, std::pair<double, double>> baseline_map;
+
+    while ((key = (TKey*)next())){
+        TObject *obj = key->ReadObj();
+
+        if (obj->InheritsFrom(TTree::Class())) {
+            TTree *tree = (TTree*)obj;
+
+            // Вхідні змінні
+            int32_t run, event, ht, lt;
+            std::vector<int16_t>* waveform = nullptr;
+
+            tree->SetBranchAddress("om_num", &om_num);
+            tree->SetBranchAddress("run_id", &run);
+            tree->SetBranchAddress("event_id", &event);
+            tree->SetBranchAddress("high_threshold", &ht);
+            tree->SetBranchAddress("low_threshold", &lt);
+            tree->SetBranchAddress("waveform", &waveform);
+
+            // Вихід
+            TH2F *histo = new TH2F(
+                Form("h2_om_%d", om_num),
+                Form("OM%d baseline (substracted BL);Time;Amplitude", om_num),
+                1024, 0, 6.4E-6,
+                200, -1e2, 1e2
+            );
+            histo->SetStats(0);
+
+            double ymin = 1e9;
+            double ymax = -1e9;
+
+            tree->GetEntry(0);
+
+            double baseline = baselines[om_num];
+            int nEntries = tree->GetEntries();
+
+            for (int i = 0; i < nEntries; i++) {
+                tree->GetEntry(i);
+                if ((ht == 1) || (lt == 1)) continue;
+                int n = waveform->size();
+                for (int j = 0; j < n; j++) {
+                    double timestamp = j * 6.25E-9;
+                    double value = waveform->at(j) - baseline;
+                    if (value > ymax) ymax = value;
+                    if (value < ymin) ymin = value;
+                    histo->Fill(timestamp, value);
+                }
+            }
+            if (histo->GetEntries() == 0){
+                for (int i = 0; i < nEntries; i++) {
+
+                    tree->GetEntry(i);
+
+                    for (int j = 0; j < 220; j++) {
+                        double timestamp = j * 6.25E-9;
+                        double value = waveform->at(j) - baseline;
+                        if (value > ymax) ymax = value;
+                        if (value < ymin) ymin = value;
+                        histo->Fill(timestamp, value);
+                    }
+                }
+                double xmax = 220*6.25E-9;
+                histo->GetXaxis()->SetRangeUser(0, xmax);
+
+            }
+            ymax += 20;
+            ymin -= 20;
+            histo->GetYaxis()->SetRangeUser(ymin, ymax);
+            TCanvas *c1 = new TCanvas("c1", "2D Hist", 800, 600);
+            histo->Draw("COLZ");
+            c1->SaveAs(Form("./build/2D_baselines_histos_subBL/OM%d_2D_baseline_subBL.png", om_num));
+            delete c1;
+        }
+
+    }
+}
+===== 2D_histo.cpp =====
+#include <TFile.h>
+#include <TTree.h>
+#include <TGraph.h>
+#include <TH2.h>
+#include <TCanvas.h>
+#include <vector>
+#include <iostream>
+
+int main() {
+
+    // Відкрити вхідний файл
+    TFile *fin = new TFile("./build/waveforms.root", "READ");
+    TTree *tree = (TTree*)fin->Get("t");
+
+    // Підключити гілку
+    // int16_t om_num;
+    // int32_t run, event, ht, lt;
+    std::vector<double>* waveform = nullptr;
+
+    // tree->SetBranchAddress("run_id", &run);
+    // tree->SetBranchAddress("event_id", &event);
+    // tree->SetBranchAddress("om_num", &om_num);
+    // tree->SetBranchAddress("high_threshold", &ht);
+    // tree->SetBranchAddress("low_threshold", &lt);
+    tree->SetBranchAddress("waveform", &waveform);
+
+    TH2F *h2 = new TH2F("h2", "Example 2D Hist;X-axis;Y-axis", 1024, 0, 6.4E-6, 700, 2900, 3600);
+    h2->SetStats(0);
+
+    int nEntries = tree->GetEntries();
+
+    for (int i = 0; i < nEntries; i++) {
+
+        tree->GetEntry(i);
+
+        int n = waveform->size();
+
+        for (int j = 0; j < n; j++) {
+            double timestamp = j * 6.25E-9;
+            h2->Fill(timestamp, waveform->at(j));
+        }
+    }
+
+    std::cout << "Name: " << h2->GetName() << std::endl;
+    std::cout << "Title: " << h2->GetTitle() << std::endl;
+    std::cout << "Entries: " << h2->GetEntries() << std::endl;
+    std::cout << "NbinsX: " << h2->GetNbinsX() << std::endl;
+    std::cout << "NbinsY: " << h2->GetNbinsY() << std::endl;
+
+    TCanvas *c1 = new TCanvas("c1", "2D Hist", 800, 600);
+    h2->Draw("COLZ");
+    c1->SaveAs("2D_histo.png");
+
+    fin->Close();
+
+    std::cout << "Saved " << nEntries << " graphs\n";
+    return 0;
+}
+===== 2D_histo_separate_OMs.cpp =====
+#include <TFile.h>
+#include <TTree.h>
+#include <TGraph.h>
+#include <TH2.h>
+#include <TCanvas.h>
+#include <vector>
+#include <iostream>
+
+int main() {
+
+    // Відкрити вхідний файл
+    TFile *fin = new TFile("./build/waveforms.root", "READ");
+    TTree *tree = (TTree*)fin->Get("t");
+
+    // Підключити гілку
+    int16_t om_num;
+    // int32_t run, event, ht, lt;
+    std::vector<int16_t>* waveform = nullptr;
+
+    // tree->SetBranchAddress("run_id", &run);
+    // tree->SetBranchAddress("event_id", &event);
+    tree->SetBranchAddress("om_num", &om_num);
+    // tree->SetBranchAddress("high_threshold", &ht);
+    // tree->SetBranchAddress("low_threshold", &lt);
+    tree->SetBranchAddress("waveform", &waveform);
+
+    int nEntries = tree->GetEntries();
+
+    for (int OM = 0; OM <= 711; OM++){
+        TH2F *histo = new TH2F(
+            Form("h2_om_%d", OM),
+            Form("OM %d;Time;Amplitude", OM),
+            1024, 0, 6.4E-6,
+            700, 2900, 3600
+        );
+        histo->SetStats(0);
+        for (int i = 0; i < nEntries; i++) {
+            tree->GetEntry(i);    
+            if (om_num != OM) continue;
+            int n = waveform->size();
+
+            for (int j = 0; j < n; j++) {
+                double timestamp = j * 6.25E-9;
+                histo->Fill(timestamp, waveform->at(j));
+            }
+        }
+        if (histo->GetEntries() == 0){
+            std::cout << "OM " << OM << " has no data!" << std ::endl;
+            continue;
+        }
+        TCanvas *c1 = new TCanvas("c1", "2D Hist", 800, 600);
+        histo->Draw("COLZ");
+        c1->SaveAs(Form("./build/Histos by OMs/OM%d_2D_histo.png", OM));
+
+
+    }
+    fin->Close();
+    return 0;
+}
+===== 2D_histo_separate_OMs_substracted_BL.cpp =====
+#include <TFile.h>
+#include <TTree.h>
+#include <TGraph.h>
+#include <TH2.h>
+#include <TCanvas.h>
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <TKey.h>
+
+int main() {
+
+        // Reading baselines
+    std::ifstream in("OM_baselines_sorted.txt");
+
+    std::map<int16_t, double> baselines;
+
+    std::string header;
+    std::getline(in, header);
+
+    int16_t om_num;
+    double mean, sigma;
+
+    while (in >> om_num >> mean >> sigma) {
+        baselines[om_num] = mean;
+    }
+
+    in.close();
+
+    // Відкрити вхідний файл
+    TFile *fin = new TFile("./build/sorted_by_OM.root", "READ");
+    
+    TIter next(fin->GetListOfKeys());
+    TKey *key;
+
+    // Підключити гілку
+    // int16_t om_num;
+    int32_t run, event, ht, lt;
+    std::vector<int16_t>* waveform = nullptr;
+
+    while ((key = (TKey*)next())){
+        TObject *obj = key->ReadObj();
+
+        if (obj->InheritsFrom(TTree::Class())) {
+            TTree *tree = (TTree*)obj;
+            
+            // tree->SetBranchAddress("run_id", &run);
+            // tree->SetBranchAddress("event_id", &event);
+            tree->SetBranchAddress("om_num", &om_num);
+            tree->SetBranchAddress("high_threshold", &ht);
+            tree->SetBranchAddress("low_threshold", &lt);
+            tree->SetBranchAddress("waveform", &waveform);
+
+            tree->GetEntry(0);
+
+            TH2F *histo = new TH2F(
+                Form("h2_om_%d", om_num),
+                Form("OM %d (substracted BL);Time;Amplitude", om_num),
+                1024, 0, 6.4E-6,
+                4800, -3e-2, 9e-2
+            );
+            histo->SetStats(0);
+
+            double ymin = 1e9;
+            double ymax = -1e9;
+
+            double baseline = baselines[om_num];
+            int nEntries = tree->GetEntries();
+
+            for (int i = 0; i < nEntries; i++) {
+                tree->GetEntry(i);
+                if (ht == 0) continue;
+                int n = waveform->size();
+                double normalization_sum = 0;
+                for (int j = 0; j < n; j++) {
+                    normalization_sum += waveform->at(j) - baseline;
+                }
+                for (int j = 0; j < n; j++) {
+                    double timestamp = j * 6.25E-9;
+                    double value = (waveform->at(j) - baseline) / normalization_sum;
+                    if (value > ymax) ymax = value;
+                    if (value < ymin) ymin = value;
+                    histo->Fill(timestamp, value);
+                }
+            }
+            // ymax += 20;
+            // ymin -= 20;
+            if (histo->GetEntries() == 0){
+                std::cout << "OM " << om_num << " has no event data!" << std ::endl;
+                continue;
+            }
+
+            histo->GetYaxis()->SetRangeUser(ymin, ymax);
+
+            TCanvas *c1 = new TCanvas("c1", "2D Hist", 800, 600);
+            histo->Draw("COLZ");
+            c1->SaveAs(Form("./build/Histos_by_OMs_substracted_BL/OM%d_2D_histo_substracted_BL.png", om_num));
+            delete c1;
+        }
+
+    }
+    fin->Close();
+    return 0;
+}
+===== 2D_histo_substracted_BL.cpp =====
+#include <TFile.h>
+#include <TTree.h>
+#include <TGraph.h>
+#include <TH2.h>
+#include <TCanvas.h>
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <TKey.h>
+
+int main() {
+
+        // Reading baselines
+    std::ifstream in("OM_baselines_sorted.txt");
+
+    std::map<int16_t, double> baselines;
+
+    std::string header;
+    std::getline(in, header);
+
+    int16_t om_num;
+    double mean, sigma;
+
+    while (in >> om_num >> mean >> sigma) {
+        baselines[om_num] = mean;
+    }
+
+    in.close();
+
+    // Відкрити вхідний файл
+    TFile *fin = new TFile("./build/sorted_by_OM.root", "READ");
+    
+    TIter next(fin->GetListOfKeys());
+    TKey *key;
+
+
+    TH2F *histo = new TH2F(
+        Form("h2_om_%d", om_num),
+        "All OMs (substracted BL);Time;Amplitude",
+        1024, 0, 6.4E-6,
+        400, -1e-2, 3e-2
+    );
+    histo->SetStats(0);
+
+    double ymin = 1e9;
+    double ymax = -1e9;
+    // Підключити гілку
+    // int16_t om_num;
+    int32_t run, event, ht, lt;
+    std::vector<int16_t>* waveform = nullptr;
+
+    while ((key = (TKey*)next())){
+        TObject *obj = key->ReadObj();
+
+        if (obj->InheritsFrom(TTree::Class())) {
+            TTree *tree = (TTree*)obj;
+            
+            // tree->SetBranchAddress("run_id", &run);
+            // tree->SetBranchAddress("event_id", &event);
+            tree->SetBranchAddress("om_num", &om_num);
+            tree->SetBranchAddress("high_threshold", &ht);
+            tree->SetBranchAddress("low_threshold", &lt);
+            tree->SetBranchAddress("waveform", &waveform);
+
+            tree->GetEntry(0);
+
+            double baseline = baselines[om_num];
+            int nEntries = tree->GetEntries();
+
+            for (int i = 0; i < nEntries; i++) {
+                tree->GetEntry(i);
+                // if (ht == 0) continue;
+                int n = waveform->size();
+                double normalization_sum = 0;
+                for (int j = 0; j < n; j++) {
+                    normalization_sum += waveform->at(j) - baseline;
+                }
+                if (std::abs(normalization_sum) < 5000) continue;
+                for (int j = 0; j < n; j++) {
+                    double timestamp = j * 6.25E-9;
+                    double value = (waveform->at(j) - baseline) / normalization_sum;
+                    if (value > ymax) ymax = value;
+                    if (value < ymin) ymin = value;
+                    histo->Fill(timestamp, value);
+                }
+            }
+            // ymax += 20;
+            // ymin -= 20;
+            if (histo->GetEntries() == 0){
+                std::cout << "OM " << om_num << " has no event data!" << std ::endl;
+                continue;
+            }
+
+
+        }
+
+    }
+    // histo->GetYaxis()->SetRangeUser(ymin, ymax);
+
+    TCanvas *c1 = new TCanvas("c1", "2D Hist", 800, 600);
+    histo->Draw("COLZ");
+    c1->SaveAs(Form("./build/2D_histo_substracted_BL_normalized.png", om_num));
+    delete c1;
+    fin->Close();
+    return 0;
+}
+===== 2D_histo_substracted_SBL.cpp =====
+#include <TFile.h>
+#include <TTree.h>
+#include <TH2.h>
+#include <TCanvas.h>
+#include <TKey.h>
+
+#include <omp.h>
+
+#include <vector>
+#include <string>
+#include <iostream>
+#include <cmath>
+
+#include <ROOT/TThreadExecutor.hxx>
+#include <ROOT/RDataFrame.hxx>
+#include <ROOT/RLogger.hxx>
+
+constexpr int NSAMPLES = 1024;
+constexpr double DT = 6.25E-9;
+
+
+
+// ======================================================
+// GET TREE NAMES
+// ======================================================
+
+std::vector<std::string> GetTreeNames(TFile* file)
+{
+    std::vector<std::string> treeNames;
+
+    TIter next(file->GetListOfKeys());
+    TKey* key;
+
+    while ((key = (TKey*)next()))
+    {
+        TObject* obj = key->ReadObj();
+
+        if (obj->InheritsFrom(TTree::Class()))
+        {
+            treeNames.push_back(obj->GetName());
+        }
+
+        delete obj;
+    }
+
+    return treeNames;
+}
+
+
+
+// ======================================================
+// CREATE HISTOGRAM
+// ======================================================
+
+TH2F* CreateHistogram(int om_num)
+{
+    TH2F* histo = new TH2F(
+        Form("h2_om_%d", om_num),
+        Form("OM %d (substracted SBL);Time;Amplitude", om_num),
+        NSAMPLES,
+        0,
+        6.4E-6,
+        5e2,
+        -1e-2,
+        4e-2
+    );
+
+    histo->SetStats(0);
+
+    return histo;
+}
+
+
+
+// ======================================================
+// SAVE HISTOGRAM
+// ======================================================
+
+void SaveHistogram(TH2F* histo, int om_num)
+{
+    TCanvas* c1 = new TCanvas(
+        Form("c1_om_%d", om_num),
+        "",
+        1600,
+        1200
+    );
+
+    histo->Draw("COLZ");
+
+    c1->SaveAs(
+        Form(
+            "./build/2D_histos_sSBL_norm/OM%d_2D_histo_sSBL_norm_ht.png",
+            om_num
+        )
+    );
+
+    delete c1;
+}
+
+void FillHisto(TH2F* histo, double* bl, std::vector<int16_t>* waveform, int32_t ht){
+        for (int sample = 0;
+             sample < NSAMPLES;
+             sample++)
+        {
+            double timestamp =
+                sample * DT;
+
+            double value =
+                (-1) * (waveform->at(sample)
+                - bl[sample]);
+
+            histo->Fill(
+                timestamp,
+                value
+            );
+        }
+}
+
+void FillHistoNormalized(TH2F* histo, double* bl, std::vector<int16_t>* waveform, double normalization_sum){
+        for (int sample = 0;
+             sample < NSAMPLES;
+             sample++)
+        {
+            double timestamp =
+                sample * DT;
+
+            double value =
+                (-1) * (waveform->at(sample)
+                - bl[sample]) / normalization_sum;
+
+            histo->Fill(
+                timestamp,
+                value
+            );
+        }
+}
+
+double GetNormalizationSum(double* bl, std::vector<int16_t>* waveform){
+    double normalization_sum = 0;
+    for (int sample = 0;
+             sample < NSAMPLES;
+             sample++)
+    {
+        normalization_sum +=
+            std::abs(waveform->at(sample)
+            - bl[sample]);
+    }
+
+    return normalization_sum;
+}
+
+
+
+// ======================================================
+// PROCESS SINGLE TREE
+// ======================================================
+
+TH2F* ProcessTree(
+    TTree* tree,
+    TFile& sbl_file
+)
+{
+    if (!tree)
+        return nullptr;
+
+    int16_t om_num;
+    int32_t ht, lt;
+
+    std::vector<int16_t>* waveform = nullptr;
+
+    tree->SetBranchAddress("om_num", &om_num);
+    tree->SetBranchAddress("high_threshold", &ht);
+    tree->SetBranchAddress("low_threshold", &lt);
+    tree->SetBranchAddress("waveform", &waveform);
+
+    tree->GetEntry(0);
+
+    // --------------------------------------------------
+
+    TTree* sbl_tree = nullptr;
+
+    sbl_file.GetObject(
+        Form("SBL_OM%d", om_num),
+        sbl_tree
+    );
+
+    if (!sbl_tree)
+    {
+        #pragma omp critical
+        {
+            std::cout
+                << "OM"
+                << om_num
+                << " is turned off or has low \"no trigger\" statictics.\n";
+        }
+
+        return nullptr;
+    }
+
+    // --------------------------------------------------
+
+    double bl[NSAMPLES];
+
+    sbl_tree->SetBranchAddress(
+        "baseline",
+        bl
+    );
+
+    sbl_tree->GetEntry(0);
+
+    // --------------------------------------------------
+
+    TH2F* histo = CreateHistogram(om_num);
+
+    // --------------------------------------------------
+
+    Long64_t nEntries = tree->GetEntries();
+
+    for (Long64_t i = 0; i < nEntries; i++)
+    {
+        tree->GetEntry(i);
+
+        if (!waveform || !ht)
+            continue;
+
+        double normalization_sum = GetNormalizationSum(bl, waveform);
+
+        
+
+        if (std::abs(normalization_sum) < 5000){
+            std::cout << "OM" << om_num << " too low sum.\n";
+            continue;
+        }
+
+        FillHistoNormalized(histo, bl, waveform, normalization_sum);
+    }
+
+    #pragma omp critical
+    {
+        std::cout
+            << "OM"
+            << om_num
+            << " done.\n";
+    }
+
+    return histo;
+}
+
+
+
+// ======================================================
+// MAIN
+// ======================================================
+
+int main()
+{
+    ROOT::EnableThreadSafety();
+
+    // --------------------------------------------------
+
+    TFile* fin = new TFile(
+        "./build/sorted_by_OM.root",
+        "READ"
+    );
+
+    if (!fin || fin->IsZombie())
+    {
+        std::cout
+            << "Cannot open input ROOT file.\n";
+
+        return 1;
+    }
+
+    // --------------------------------------------------
+
+    std::vector<std::string> treeNames =
+        GetTreeNames(fin);
+
+
+    TH2F* global_histo = new TH2F(
+        "h2_all_om",
+        "All OMs (substracted SBL, normalized, ht);Time;Amplitude",
+        NSAMPLES,
+        0,
+        6.4E-6,
+        500,
+        -1e-2,
+        4e-2
+    );
+
+    global_histo->SetStats(0);
+
+    // --------------------------------------------------
+
+    #pragma omp parallel
+    {
+        // thread-local files
+
+        TH2F* local_global_histo = new TH2F(
+            Form("h2_global_thread_%d", omp_get_thread_num()),
+            "",
+            NSAMPLES,
+            0,
+            6.4E-6,
+            500,
+            -1e-2,
+            4e-2
+        );  
+
+        TFile fin_local(
+            "./build/sorted_by_OM.root",
+            "READ"
+        );
+
+        TFile sbl_local(
+            "./build/SBLs.root",
+            "READ"
+        );
+
+        // --------------------------------------------------
+
+        #pragma omp for schedule(dynamic)
+
+        for (size_t t = 0;
+             t < treeNames.size();
+             t++)
+        {
+            TTree* tree = nullptr;
+
+            fin_local.GetObject(
+                treeNames[t].c_str(),
+                tree
+            );
+
+            if (!tree)
+                continue;
+
+            // --------------------------------------------------
+
+            TH2F* histo =
+                ProcessTree(
+                    tree,
+                    sbl_local
+                );
+
+            if (!histo)
+                continue;
+
+            // --------------------------------------------------
+            // ROOT GRAPHICS ARE NOT THREAD SAFE
+            // --------------------------------------------------
+
+            int om_num;
+
+            sscanf(
+                histo->GetName(),
+                "h2_om_%d",
+                &om_num
+            );
+
+            if (histo->GetEntries() == 0)
+            {
+                #pragma omp critical
+                {
+                    std::cout
+                        << "OM"
+                        << om_num
+                        << " histogram is empty.\n";
+                }
+
+                delete histo;
+                continue;
+            }
+
+            #pragma omp critical
+            {
+                // SaveHistogram(
+                //     histo,
+                //     om_num
+                // );
+
+                local_global_histo->Add(histo);
+            }
+
+            delete histo;
+        }
+
+        #pragma omp critical
+        {
+            global_histo->Add(local_global_histo);
+        }
+
+        delete local_global_histo;
+    }
+
+    // --------------------------------------------------
+
+    TCanvas* c_global = new TCanvas(
+        "c_global",
+        "",
+        1600,
+        1200
+    );
+
+    global_histo->Draw("COLZ");
+
+    c_global->SaveAs(
+        "./build/ALL_OMs_2D_histo_sSBL_ht_absNS5000.png"
+    );
+
+    delete c_global;
+    delete global_histo;
+
+    fin->Close();
+
+    delete fin;
+
+    return 0;
+}
+===== 2D_histo_substracted_SBL_normalized.cpp =====
+#include <TFile.h>
+#include <TTree.h>
+#include <TGraph.h>
+#include <TH2.h>
+#include <TCanvas.h>
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <TKey.h>
+#include <omp.h>
+
+#include <ROOT/TThreadExecutor.hxx>
+#include <ROOT/RDataFrame.hxx>
+#include <ROOT/RLogger.hxx>
+
+int main() {
+
+    ROOT::EnableThreadSafety();
+
+    TFile *fin = new TFile("./build/sorted_by_OM.root", "READ");
+
+
+
+    // ===================== CHANGED =====================
+    // Собираем имена деревьев заранее
+    std::vector<std::string> treeNames;
+
+    TIter next(fin->GetListOfKeys());
+    TKey *key;
+
+    while ((key = (TKey*)next())) {
+
+        TObject *obj = key->ReadObj();
+
+        if (obj->InheritsFrom(TTree::Class())) 
+        {
+            treeNames.push_back(obj->GetName());
+        }
+
+        delete obj;
+    }
+    // ===================================================
+
+
+
+    TH2F *histo = new TH2F(
+        "h2_all_om",
+        "All OMs (substracted BL);Time;Amplitude",
+        1024, 0, 6.4E-6,
+        400, -1e-2, 3e-2
+    );
+
+    histo->SetStats(0);
+
+    double ymin = 1e9;
+    double ymax = -1e9;
+
+
+
+    // ===================== CHANGED =====================
+    #pragma omp parallel
+    {
+
+        // thread-local histogram
+        TH2F *local_histo = new TH2F(
+            Form("h_thread_%d", omp_get_thread_num()),
+            "",
+            1024, 0, 6.4E-6,
+            400, -1e-2, 3e-2
+        );
+
+        double local_ymin = 1e9;
+        double local_ymax = -1e9;
+
+        // thread-local files
+        TFile fin_local("./build/sorted_by_OM.root", "READ");
+
+        TFile sbl_local("./build/SBLs.root", "READ");
+
+
+
+        #pragma omp for schedule(dynamic)
+        for (int t = 0; t < treeNames.size(); t++) {
+    // ===================================================
+
+
+
+            TTree *tree = nullptr;
+
+            // ===================== CHANGED =====================
+            fin_local.GetObject(treeNames[t].c_str(), tree);
+            // ===================================================
+
+            if (!tree) continue;
+
+
+
+            int16_t om_num;
+            int32_t run, event, ht, lt;
+
+            std::vector<int16_t>* waveform = nullptr;
+
+            tree->SetBranchAddress("om_num", &om_num);
+            tree->SetBranchAddress("high_threshold", &ht);
+            tree->SetBranchAddress("low_threshold", &lt);
+            tree->SetBranchAddress("waveform", &waveform);
+
+            tree->GetEntry(0);
+
+            TTree *SBLs_tree = nullptr;
+
+
+
+            // ===================== CHANGED =====================
+            sbl_local.GetObject(Form("SBL_OM%d", om_num), SBLs_tree);
+            // ===================================================
+
+
+
+            if (!SBLs_tree) {
+
+                #pragma omp critical
+                {
+                    std::cout << "OM" << om_num << " is turned off.\n";
+                }
+
+                continue;
+            }
+
+            double bl[1024];
+
+            SBLs_tree->SetBranchAddress("baseline", bl);
+
+            SBLs_tree->GetEntry(0);
+
+            Long64_t nEntries = tree->GetEntries();
+
+            for (Long64_t i = 0;i < nEntries; i++) {
+                tree->GetEntry(i);
+                if (!waveform) continue;
+                double normalization_sum = 0;
+                for (int sample = 0; sample < 1024; sample++) {
+                    normalization_sum += waveform->at(sample) - bl[sample];
+                }
+
+                // ===================== CHANGED =====================
+                if (normalization_sum < 500)
+                    continue;
+                // ===================================================
+
+                for (int sample = 0; sample < 1024; sample++) {
+                    double timestamp = sample * 6.25E-9;
+                    // double value = (waveform->at(sample) - bl[sample]) / normalization_sum;
+                    double value = (waveform->at(sample) - bl[sample]);
+
+                    if (value > local_ymax) local_ymax = value;
+                    if (value < local_ymin) local_ymin = value;
+
+                    // ===================== CHANGED =====================
+                    local_histo->Fill(timestamp, value);
+                    // ===================================================
+                }
+            }
+
+            #pragma omp critical
+            {
+                std::cout << "OM" << om_num << " done.\n";
+            }
+        
+        }
+
+        // ===================== CHANGED =====================
+        // merge histograms
+        #pragma omp critical
+        {
+            histo->Add(local_histo);
+
+            if (local_ymax > ymax) ymax = local_ymax;
+            if (local_ymin < ymin) ymin = local_ymin;
+        }
+
+        delete local_histo;
+    }
+    // ===================================================
+
+
+
+    TCanvas *c1 =new TCanvas("c1"," 2D Hist", 800, 600);
+
+    histo->Draw("COLZ");
+
+    c1->SaveAs("./build/2D_histo_substracted_SBL_normalized.png");
+
+    fin->Close();
+
+    // delete c1;
+    // delete histo;
+    // delete fin;
+
+    return 0;
+}
+===== OM_baselines_definition.cpp =====
+#include <TFile.h>
+#include <TTree.h>
+#include <TH2.h>
+#include <TF1.h>
+#include <TStyle.h>
+#include <TCanvas.h>
+#include <vector>
+#include <iostream>
+#include <unordered_map>
+#include <fstream>
+#include <TKey.h>
+
+int main() {
+    TFile *fin = new TFile("./build/sorted_by_OM.root", "READ");
+
+    TIter next(fin->GetListOfKeys());
+    TKey *key;
+
+    std::map<int, std::pair<double, double>> baseline_map;
+
+    while ((key = (TKey*)next())){
+        TObject *obj = key->ReadObj();
+
+        if (obj->InheritsFrom(TTree::Class())) {
+            TTree *tree = (TTree*)obj;
+
+            // Вхідні змінні
+            int16_t om_num;
+            int32_t run, event, ht, lt;
+            std::vector<int16_t>* waveform = nullptr;
+
+            tree->SetBranchAddress("om_num", &om_num);
+            tree->SetBranchAddress("run_id", &run);
+            tree->SetBranchAddress("event_id", &event);
+            tree->SetBranchAddress("high_threshold", &ht);
+            tree->SetBranchAddress("low_threshold", &lt);
+            tree->SetBranchAddress("waveform", &waveform);
+
+            // Вихід
+            TH1D *h1 = new TH1D("h1", "Baseline 1D Hist;X-axis", 5000, 0, 5000);
+            // h2->SetStats(0);
+
+            int nEntries = tree->GetEntries();
+
+            for (int i = 0; i < nEntries; i++) {
+
+                tree->GetEntry(i);
+
+                if ((ht != 0) || (lt != 0 )) continue;
+
+                int n = waveform->size();
+
+                for (int j = 0; j < n; j++) {
+                    h1->Fill(waveform->at(j));
+                }
+            }
+            if (h1->GetEntries() == 0){
+                for (int i = 0; i < nEntries; i++) {
+
+                    tree->GetEntry(i);
+
+                    for (int j = 0; j < 220; j++) {
+                        h1->Fill(waveform->at(j));
+                    }
+                }
+            }
+            int max_bin = h1->GetMaximumBin();
+            double baseline = h1->GetBinCenter(max_bin);
+
+            double xmin = h1->FindFirstBinAbove(0) - 10;
+            double xmax = h1->FindLastBinAbove(0) + 10;
+            h1->GetXaxis()->SetRangeUser(xmin, xmax);
+
+            TF1 *gaus = new TF1("gaus", "gaus", xmin, xmax);
+            h1->Fit(gaus, "R");
+            gStyle->SetOptFit(0111);
+
+            baseline_map[om_num] = {gaus->GetParameter(1), gaus->GetParameter(2)};
+
+            TCanvas *c1 = new TCanvas("c1", "1D Hist", 800, 600);
+            h1->Draw();
+            gaus->Draw("same");
+            c1->SaveAs(Form("./build/1D baselines histos/OM%d_1D_baseline_histo.png", om_num));
+            
+            delete c1;
+            delete h1;
+        }
+    }
+    fin->Close();
+
+    std::ofstream out("OM_baselines_sorted.txt");
+    out << "OM\tBaseline\tStd\n";
+    for (auto &p : baseline_map) {
+        out << p.first << "\t" << p.second.first << "\t" << p.second.second << "\n";
+    }
+    out.close();
+
+    std::cout << "Done! Baselines calculated and sorted.\n";
+
+    return 0;
+}
+===== plot_waveforms.cpp =====
+#include <TFile.h>
+#include <TTree.h>
+#include <TGraph.h>
+#include <TCanvas.h>
+#include <vector>
+#include <iostream>
+
+int main() {
+
+    // Відкрити вхідний файл
+    TFile *fin = new TFile("./build/waveforms.root", "READ");
+    TTree *tree = (TTree*)fin->Get("t");
+
+    // Підключити гілку
+    int16_t om_num;
+    int32_t run, event, ht, lt;
+    std::vector<double>* waveform = nullptr;
+
+    tree->SetBranchAddress("run_id", &run);
+    tree->SetBranchAddress("event_id", &event);
+    tree->SetBranchAddress("om_num", &om_num);
+    tree->SetBranchAddress("high_threshold", &ht);
+    tree->SetBranchAddress("low_threshold", &lt);
+    tree->SetBranchAddress("waveform", &waveform);
+
+    TCanvas canvas("c","c",800,600);
+
+    int nEntries = tree->GetEntries();
+
+    for (int i = 0; i < nEntries; i++) {
+
+        tree->GetEntry(i);
+
+        int n = waveform->size();
+
+        TGraph graph(n);
+
+        for (int j = 0; j < n; j++) {
+            double timestamp = j * 6.25E-9;
+            graph.SetPoint(j, timestamp, waveform->at(j));
+        }
+
+        graph.SetTitle("Waveform;Time;Amplitude");
+        graph.Draw("AL");
+
+        std::string filename = "./build/Histos/Waveform_run" +
+                                std::to_string(run) +
+                                "_event" +
+                                std::to_string(event) +
+                                "_om_num" +
+                                std::to_string(om_num) +
+                                "_ht_" +
+                                std::to_string(ht) +       
+                                "_lt_" +
+                                std::to_string(lt) +
+                                "_" +
+                                std::to_string(i) +
+                                ".png";
+
+        canvas.SaveAs(filename.c_str());
+    }
+
+    fin->Close();
+
+    std::cout << "Saved " << nEntries << " graphs\n";
+    return 0;
+}
+===== SBL_gaus_and_average.cpp =====
+#include <omp.h>
+
+#include <TFile.h>
+#include <TTree.h>
+#include <TH2F.h>
+#include <TCanvas.h>
+
+#include <vector>
+#include <iostream>
+#include <cmath>
+
+#include "BLlib.h"
+
+int main() {
+
+    ROOT::EnableThreadSafety();
+
+    TH2F *histo = new TH2F(
+        "h2",
+        "Gauss vs Average baselines (All OMs);BL avg;BL gauss",
+        600, 3300, 3600,
+        600, 3300, 3600
+    );
+
+    histo->SetDirectory(nullptr);
+    histo->SetStats(0);
+
+    #pragma omp parallel
+    {
+        // thread-local histogram
+        TH2F local_histo(
+            Form("h_thread_%d", omp_get_thread_num()),
+            "",
+            600, 3300, 3600,
+            600, 3300, 3600
+        );
+
+        local_histo.SetDirectory(nullptr);
+
+        #pragma omp for schedule(dynamic)
+        for (int om_num = 0; om_num < 712; om_num++) {
+
+            // thread-local file
+            TFile *fin = TFile::Open(
+                "./build/sorted_by_OM.root",
+                "READ"
+            );
+
+            if (!fin || fin->IsZombie()) {
+
+                #pragma omp critical
+                {
+                    std::cout << "Cannot open file\n";
+                }
+
+                continue;
+            }
+
+            TTree *tree = nullptr;
+
+            fin->GetObject(
+                Form("t_om_%d", om_num),
+                tree
+            );
+
+            if (!tree) {
+
+                #pragma omp critical
+                {
+                    std::cout
+                        << "Tree not found for OM "
+                        << om_num
+                        << "\n";
+                }
+
+                fin->Close();
+                delete fin;
+
+                continue;
+            }
+
+            int32_t run = 0;
+            int32_t event = 0;
+            int32_t ht = 0;
+            int32_t lt = 0;
+
+            std::vector<int16_t>* waveform = nullptr;
+
+            tree->SetBranchStatus("*", 0);
+
+            tree->SetBranchStatus("run_id", 1);
+            tree->SetBranchStatus("event_id", 1);
+            tree->SetBranchStatus("high_threshold", 1);
+            tree->SetBranchStatus("low_threshold", 1);
+            tree->SetBranchStatus("waveform", 1);
+
+            tree->SetBranchAddress("run_id", &run);
+            tree->SetBranchAddress("event_id", &event);
+            tree->SetBranchAddress("high_threshold", &ht);
+            tree->SetBranchAddress("low_threshold", &lt);
+            tree->SetBranchAddress("waveform", &waveform);
+
+            const Long64_t nSamples = 1024;
+
+            for (int sample = 0; sample < nSamples; sample++) {
+
+                double avg = get_sample_baseline_average(
+                    tree,
+                    sample,
+                    ht,
+                    lt,
+                    waveform
+                );
+
+                double gauss = get_sample_baseline(
+                    tree,
+                    sample,
+                    ht,
+                    lt,
+                    waveform
+                );
+
+                if (
+                    std::isnan(avg) ||
+                    std::isnan(gauss)
+                ) {
+                    continue;
+                }
+
+                local_histo.Fill(avg, gauss);
+            }
+
+            fin->Close();
+            delete fin;
+
+            #pragma omp critical
+            {
+                std::cout
+                    << "OM "
+                    << om_num
+                    << " done\n";
+            }
+        }
+
+        // merge histograms
+        #pragma omp critical
+        {
+            histo->Add(&local_histo);
+        }
+    }
+
+    // save ROOT histogram
+    TFile fout(
+        "./build/All_OMs_gauss_vs_avg_BL.root",
+        "RECREATE"
+    );
+
+    histo->Write();
+
+    fout.Close();
+
+    // draw canvases
+    TCanvas *c1 = new TCanvas(
+        "c1",
+        "Graph",
+        800,
+        600
+    );
+
+    histo->Draw("COLZ");
+
+    c1->SaveAs(
+        "./build/All_OMs_gauss_vs_avg_BL.png"
+    );
+
+    // upper peak
+    histo->GetXaxis()->SetRangeUser(3510, 3590);
+    histo->GetYaxis()->SetRangeUser(3510, 3590);
+
+    histo->Draw("COLZ");
+
+    c1->SaveAs(
+        "./build/All_OMs_gauss_vs_avg_BL_UP.png"
+    );
+
+    // lower peak
+    histo->GetXaxis()->SetRangeUser(3350, 3390);
+    histo->GetYaxis()->SetRangeUser(3350, 3390);
+
+    histo->Draw("COLZ");
+
+    c1->SaveAs(
+        "./build/All_OMs_gauss_vs_avg_BL_LP.png"
+    );
+
+    delete c1;
+    delete histo;
+
+    return 0;
+}
+===== SBL_gaus_and_mode.cpp =====
+#include <omp.h>
+
+#include <TFile.h>
+#include <TTree.h>
+#include <TH2F.h>
+#include <TCanvas.h>
+
+#include <vector>
+#include <iostream>
+#include <cmath>
+
+#include "BLlib.h"
+
+int main() {
+
+    ROOT::EnableThreadSafety();
+
+    TH2F *histo = new TH2F(
+        "h2",
+        "Gauss vs Mode baselines (All OMs);BL mode;BL gauss",
+        600, 3300, 3600,
+        600, 3300, 3600
+    );
+
+    histo->SetDirectory(nullptr);
+    histo->SetStats(0);
+
+    #pragma omp parallel
+    {
+        // thread-local histogram
+        TH2F local_histo(
+            Form("h_thread_%d", omp_get_thread_num()),
+            "",
+            600, 3300, 3600,
+            600, 3300, 3600
+        );
+
+        local_histo.SetDirectory(nullptr);
+
+        #pragma omp for schedule(dynamic)
+        for (int om_num = 0; om_num < 712; om_num++) {
+
+            // thread-local file
+            TFile *fin = TFile::Open(
+                "./build/sorted_by_OM.root",
+                "READ"
+            );
+
+            if (!fin || fin->IsZombie()) {
+
+                #pragma omp critical
+                {
+                    std::cout << "Cannot open file\n";
+                }
+
+                continue;
+            }
+
+            TTree *tree = nullptr;
+
+            fin->GetObject(
+                Form("t_om_%d", om_num),
+                tree
+            );
+
+            if (!tree) {
+
+                #pragma omp critical
+                {
+                    std::cout
+                        << "Tree not found for OM "
+                        << om_num
+                        << "\n";
+                }
+
+                fin->Close();
+                delete fin;
+
+                continue;
+            }
+
+            int32_t run = 0;
+            int32_t event = 0;
+            int32_t ht = 0;
+            int32_t lt = 0;
+
+            std::vector<int16_t>* waveform = nullptr;
+
+            tree->SetBranchStatus("*", 0);
+
+            tree->SetBranchStatus("run_id", 1);
+            tree->SetBranchStatus("event_id", 1);
+            tree->SetBranchStatus("high_threshold", 1);
+            tree->SetBranchStatus("low_threshold", 1);
+            tree->SetBranchStatus("waveform", 1);
+
+            tree->SetBranchAddress("run_id", &run);
+            tree->SetBranchAddress("event_id", &event);
+            tree->SetBranchAddress("high_threshold", &ht);
+            tree->SetBranchAddress("low_threshold", &lt);
+            tree->SetBranchAddress("waveform", &waveform);
+
+            const Long64_t nSamples = 1024;
+
+            for (int sample = 0; sample < nSamples; sample++) {
+
+                double mode = get_sample_baseline_mode(
+                    tree,
+                    sample,
+                    ht,
+                    lt,
+                    waveform
+                );
+
+                double gauss = get_sample_baseline(
+                    tree,
+                    sample,
+                    ht,
+                    lt,
+                    waveform
+                );
+
+                if (
+                    std::isnan(mode) ||
+                    std::isnan(gauss)
+                ) {
+                    continue;
+                }
+
+                local_histo.Fill(mode, gauss);
+            }
+
+            fin->Close();
+            delete fin;
+
+            #pragma omp critical
+            {
+                std::cout
+                    << "OM "
+                    << om_num
+                    << " done\n";
+            }
+        }
+
+        // merge histograms
+        #pragma omp critical
+        {
+            histo->Add(&local_histo);
+        }
+    }
+
+    // save ROOT histogram
+    TFile fout(
+        "./build/All_OMs_gauss_vs_mode_BL.root",
+        "RECREATE"
+    );
+
+    histo->Write();
+
+    fout.Close();
+
+    // draw canvases
+    TCanvas *c1 = new TCanvas(
+        "c1",
+        "Graph",
+        800,
+        600
+    );
+
+    histo->Draw("COLZ");
+
+    c1->SaveAs(
+        "./build/All_OMs_gauss_vs_mode_BL.png"
+    );
+
+    // upper peak
+    histo->GetXaxis()->SetRangeUser(3510, 3590);
+    histo->GetYaxis()->SetRangeUser(3510, 3590);
+
+    histo->Draw("COLZ");
+
+    c1->SaveAs(
+        "./build/All_OMs_gauss_vs_mode_BL_UP.png"
+    );
+
+    // lower peak
+    histo->GetXaxis()->SetRangeUser(3350, 3390);
+    histo->GetYaxis()->SetRangeUser(3350, 3390);
+
+    histo->Draw("COLZ");
+
+    c1->SaveAs(
+        "./build/All_OMs_gauss_vs_mode_BL_LP.png"
+    );
+
+    delete c1;
+    delete histo;
+
+    return 0;
+}
+===== SBL_gaus_extraction.cpp =====
+#include <TFile.h>
+#include <TTree.h>
+#include <TH2.h>
+#include <TF1.h>
+#include <TStyle.h>
+#include <TCanvas.h>
+#include <vector>
+#include <iostream>
+#include <unordered_map>
+#include <fstream>
+#include <TKey.h>
+#include <TLine.h>
+#include <TGraph.h>
+#include <filesystem>
+#include <TLegend.h>
+#include "BLlib.h"
+#include <algorithm>
+#include <omp.h>
+
+int main() {
+
+    TFile *fout = new TFile("./build/SBLs.root", "RECREATE");
+
+    fout->cd();
+
+    TTree *SBL_tree = new TTree("SBL_tree", "OM sample baselines");
+
+    int om_num;
+    double bl[1024];
+
+    SBL_tree->Branch("om", &om_num);
+    SBL_tree->Branch("baseline", bl, "baseline[1024]/D");
+
+    #pragma omp parallel for schedule(dynamic)
+    for (int om = 0; om < 19; om++){
+        TFile *fin_local = new TFile("./build/sorted_by_OM.root", "READ");
+
+        TTree *tree = nullptr;
+        #pragma omp critical
+        {
+            fin_local->GetObject(Form("t_om_%d", om), tree);
+        }
+
+        if (!tree) {
+            #pragma omp critical
+            std::cout << "Tree not found\n";
+            continue;
+        }
+    
+        int32_t run, event, ht, lt;
+        std::vector<int16_t>* waveform = nullptr;
+
+        tree->SetBranchStatus("*", 0);
+        tree->SetBranchStatus("run_id", 1);
+        tree->SetBranchStatus("event_id", 1);
+        tree->SetBranchStatus("high_threshold", 1);
+        tree->SetBranchStatus("low_threshold", 1);
+        tree->SetBranchStatus("waveform", 1);
+
+        tree->SetBranchAddress("run_id", &run);
+        tree->SetBranchAddress("event_id", &event);
+        tree->SetBranchAddress("high_threshold", &ht);
+        tree->SetBranchAddress("low_threshold", &lt);
+        tree->SetBranchAddress("waveform", &waveform);
+    
+        double local_bl[1024] = {0};
+
+        bool skipOM = false;
+        for(int sample = 0; sample < 1024; sample++){
+            local_bl[sample] = get_sample_baseline(
+                tree,
+                sample,
+                ht,
+                lt,
+                waveform
+            );
+
+            if (std::isnan(local_bl[sample])) {
+                skipOM = true;
+                break;  // выходим из sample loop
+            }
+        }
+        if (skipOM) continue;
+        #pragma omp critical 
+        {
+            om_num = om;
+            std::copy(local_bl, local_bl + 1024, bl);
+            SBL_tree->Fill();
+        }
+        
+        fin_local->Close();
+        delete fin_local;
+    }
+
+    SBL_tree->Write();
+    fout->Close();
+}
+
+
+===== SBL_gaus_extractionGPT.cpp =====
+#include <TFile.h>
+#include <TTree.h>
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+#include <omp.h>
+
+#include "BLlibGPT.h"
+
+#include <ROOT/TThreadExecutor.hxx>
+#include <ROOT/RDataFrame.hxx>
+#include <ROOT/RLogger.hxx>
+
+#include <chrono>
+
+int main() {
+    auto start = std::chrono::high_resolution_clock::now();
+
+    ROOT::EnableThreadSafety();
+
+    TFile warmup("./build/sorted_by_OM.root", "READ");
+    TTree *tmp = nullptr;
+    warmup.GetObject("t_om_0", tmp);
+    warmup.Close();
+
+    std::vector<TTree*> outputTrees;
+
+    #pragma omp parallel for schedule(dynamic)
+    for (int om_num = 0; om_num < 712; om_num++) {
+
+        // thread-local file
+        TFile *fin =
+            TFile::Open(
+                "./build/sorted_by_OM.root",
+                "READ"
+            );
+
+        if (!fin || fin->IsZombie()) {
+
+            #pragma omp critical
+            {
+                std::cout
+                    << "Cannot open input file\n";
+            }
+
+            continue;
+        }
+
+        TTree *tree = nullptr;
+
+        fin->GetObject(
+            Form("t_om_%d", om_num),
+            tree
+        );
+
+        if (!tree) {
+
+            #pragma omp critical
+            {
+                std::cout
+                    << "Tree not found: "
+                    << om_num
+                    << "\n";
+            }
+
+            fin->Close();
+            delete fin;
+
+            continue;
+        }
+
+        int32_t run = 0;
+        int32_t event = 0;
+        int32_t ht = 0;
+        int32_t lt = 0;
+
+        std::vector<int16_t>* waveform = nullptr;
+
+        tree->SetBranchStatus("*", 0);
+
+        tree->SetBranchStatus("run_id", 1);
+        tree->SetBranchStatus("event_id", 1);
+        tree->SetBranchStatus("high_threshold", 1);
+        tree->SetBranchStatus("low_threshold", 1);
+        tree->SetBranchStatus("waveform", 1);
+
+        tree->SetBranchAddress("run_id", &run);
+        tree->SetBranchAddress("event_id", &event);
+        tree->SetBranchAddress("high_threshold", &ht);
+        tree->SetBranchAddress("low_threshold", &lt);
+        tree->SetBranchAddress("waveform", &waveform);
+
+
+
+        TTree *SBL_tree =
+            new TTree(Form("SBL_OM%d", om_num),
+                    Form("OM%d sample baselines", om_num));
+        SBL_tree->SetDirectory(nullptr);
+
+        double bl[1024];
+
+        SBL_tree->Branch(
+            "baseline",
+            bl,
+            "baseline[1024]/D"
+        );
+
+        double local_bl[1024];
+
+        bool skipOM = false;
+        for (int sample = 0; sample < 1024; sample++) {
+
+            local_bl[sample] =
+                get_sample_baseline(
+                    tree,
+                    sample,
+                    ht,
+                    lt,
+                    waveform
+                );
+
+            if (std::isnan(local_bl[sample])) {
+                skipOM = true;
+                break;
+            }
+        }
+
+        if (!skipOM) {
+
+            #pragma omp critical
+            {
+                std::copy(
+                    local_bl,
+                    local_bl + 1024,
+                    bl
+                );
+
+                SBL_tree->Fill();
+                outputTrees.push_back(SBL_tree);
+            }
+        }
+
+        fin->Close();
+        delete fin;
+
+        std::cout << "OM" << om_num << " SBLs extracted.\n"; 
+    }
+
+    
+    TFile fout("./build/SBLs.root", "RECREATE");
+
+    for (auto tree : outputTrees) {
+
+        fout.cd();
+
+        tree->Write();
+
+        delete tree;
+    }
+
+    fout.Close();
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            end - start
+        );
+
+    std::cout << "Execution time: "
+            << duration.count()
+            << " ms\n";
+
+    return 0;
+}
+===== sorting_by_OMs.cpp =====
+#include <TFile.h>
+#include <TTree.h>
+#include <vector>
+#include <iostream>
+#include <unordered_map>
+
+int main() {
+
+    TFile *fin = new TFile("./build/waveforms.root", "READ");
+    TTree *tree = (TTree*)fin->Get("t");
+
+    // Вхідні змінні
+    int16_t om_num;
+    int32_t run, event, ht, lt;
+    std::vector<int16_t>* waveform = nullptr;
+
+    tree->SetBranchAddress("om_num", &om_num);
+    tree->SetBranchAddress("run_id", &run);
+    tree->SetBranchAddress("event_id", &event);
+    tree->SetBranchAddress("high_threshold", &ht);
+    tree->SetBranchAddress("low_threshold", &lt);
+    tree->SetBranchAddress("waveform", &waveform);
+
+    // Вихід
+    TFile *fout = new TFile("./build/sorted_by_OM.root", "RECREATE");
+
+    std::unordered_map<int, TTree*> trees;
+
+    // Буфери (ДУЖЕ ВАЖЛИВО — не pointer)
+    int16_t out_om;
+    int32_t out_run, out_event, out_ht, out_lt;
+    std::vector<int16_t> out_waveform;
+
+    int nEntries = tree->GetEntries();
+
+    for (int i = 0; i < nEntries; i++) {
+        tree->GetEntry(i);
+
+        if (!waveform) continue;
+
+        // створення дерева при першій появі OM
+        auto &t = trees[om_num];
+        if (!t) {
+            fout->cd();
+
+            t = new TTree(Form("t_om_%d", om_num),
+                          Form("Waveforms for OM %d", om_num));
+
+            t->Branch("om_num", &out_om);
+            t->Branch("run_id", &out_run);
+            t->Branch("event_id", &out_event);
+            t->Branch("high_threshold", &out_ht);
+            t->Branch("low_threshold", &out_lt);
+            t->Branch("waveform", &out_waveform);
+        }
+
+        // копіюємо дані
+        out_om = om_num;
+        out_run = run;
+        out_event = event;
+        out_ht = ht;
+        out_lt = lt;
+        out_waveform = *waveform;
+
+        t->Fill();
+    }
+
+    fin->Close();
+
+    std::cout << "Created " << trees.size() << " trees\n";
+
+    fout->cd();
+    for (auto &p : trees) {
+        if (!p.second) continue;
+        p.second->Write("", TObject::kOverwrite);
+    }
+
+    fout->Close();
+
+    return 0;
+}
