@@ -1,0 +1,13 @@
+Error in cling::AutoLoadingVisitor::InsertIntoAutoLoadingState:
+   Missing FileEntry for brio/detail/TArrayCMod.h
+   requested to autoload type TArrayCMod
+Error in cling::AutoLoadingVisitor::InsertIntoAutoLoadingState:
+   Missing FileEntry for brio/detail/brio_record.h
+   requested to autoload type brio_record
+[warning:datatools::properties& datatools::multi_properties::add_impl2(const string&, const string&):534] Key 'flreconstruct' will ignore meta 'flreconstruct::section' !
+[warning:datatools::properties& datatools::multi_properties::add_impl2(const string&, const string&):534] Key 'flreconstruct.variantService' will ignore meta 'flreconstruct::section' !
+[warning:datatools::properties& datatools::multi_properties::add_impl2(const string&, const string&):534] Key 'flreconstruct.services' will ignore meta 'flreconstruct::section' !
+[warning:datatools::properties& datatools::multi_properties::add_impl2(const string&, const string&):534] Key 'flreconstruct.pipeline' will ignore meta 'flreconstruct::section' !
+terminate called after throwing an instance of 'std::logic_error'
+  what():  [int datatools::configuration::ascii_io::load_record(std::istream&, datatools::configuration::variant_record&) const:205: Variant parameter path 'calo_film_thickness' is different from the expected one 'layout/if_basic/shielding/is_present/layout'!]
+/var/spool/slurmd/job56997125/slurm_script: line 89: 1996203 Aborted                 (core dumped) flreconstruct -i "${INFILE}" -p "${CALIBRATIONCUTS_CONF}"

@@ -1,0 +1,27 @@
+**********************************************************************
+*                         SLURM Batch System                         *
+*              IN2P3 Computing Centre, Villeurbanne FR               *
+**********************************************************************
+* Date:                 Mon Aug 17 02:01:47 PM CEST 2026
+* Job name:             both_calib
+* Job id:               56610257
+* User:                 ikovalen
+* Account:              nemo
+* Submit host:          ccwislurm0001
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0187
+* Operating System:     Red Hat Enterprise Linux release 9.8 (Plow)
+* Architecture:         x86_64
+**********************************************************************
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+Date: Mon Aug 17 02:01:47 PM CEST 2026
+Job informations can be found using these commands:
+Accounting:
+sacct -j 56610257
+Efficiency:
+seff 56610257
+****************************************************************

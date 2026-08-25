@@ -8,7 +8,7 @@
 
 #include <omp.h>
 
-#include "BLlibGPT.h"
+#include "BLlib.h"
 
 #include <ROOT/TThreadExecutor.hxx>
 #include <ROOT/RDataFrame.hxx>

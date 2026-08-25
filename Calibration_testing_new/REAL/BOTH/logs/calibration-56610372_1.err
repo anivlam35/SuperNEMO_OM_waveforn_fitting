@@ -1,0 +1,50 @@
+Error in cling::AutoLoadingVisitor::InsertIntoAutoLoadingState:
+   Missing FileEntry for brio/detail/TArrayCMod.h
+   requested to autoload type TArrayCMod
+Error in cling::AutoLoadingVisitor::InsertIntoAutoLoadingState:
+   Missing FileEntry for brio/detail/brio_record.h
+   requested to autoload type brio_record
+[warning:datatools::properties& datatools::multi_properties::add_impl2(const string&, const string&):534] Key 'flreconstruct' will ignore meta 'flreconstruct::section' !
+[warning:datatools::properties& datatools::multi_properties::add_impl2(const string&, const string&):534] Key 'flreconstruct.variantService' will ignore meta 'flreconstruct::section' !
+[warning:datatools::properties& datatools::multi_properties::add_impl2(const string&, const string&):534] Key 'flreconstruct.services' will ignore meta 'flreconstruct::section' !
+[warning:datatools::properties& datatools::multi_properties::add_impl2(const string&, const string&):534] Key 'flreconstruct.pipeline' will ignore meta 'flreconstruct::section' !
+[notice:void datatools::library_loader::_init():467] Automatic loading of library 'Charge2EnergyModule'...
+[trace:geomtools::i_object_3d::handle_type geomtools::shape_factory::create(const string&, const string&, const datatools::properties&):89] Shape factory now stores object='calorimeter_main_scin_block'
+[trace:geomtools::i_object_3d::handle_type geomtools::shape_factory::create(const string&, const string&, const datatools::properties&):89] Shape factory now stores object='calorimeter_8inch_scin_block_extrusion'
+[trace:geomtools::i_object_3d::handle_type geomtools::shape_factory::create(const string&, const string&, const datatools::properties&):89] Shape factory now stores object='calorimeter_8inch_scin_block_extruded'
+[trace:geomtools::i_object_3d::handle_type geomtools::shape_factory::create(const string&, const string&, const datatools::properties&):89] Shape factory now stores object='calorimeter_5inch_scin_block_extrusion'
+[trace:geomtools::i_object_3d::handle_type geomtools::shape_factory::create(const string&, const string&, const datatools::properties&):89] Shape factory now stores object='calorimeter_5inch_scin_block_extruded'
+[warning:datatools::properties& datatools::multi_properties::add_impl2(const string&, const string&):534] Key 'flreconstruct' will ignore meta 'flreconstruct::section' !
+[warning:datatools::properties& datatools::multi_properties::add_impl2(const string&, const string&):534] Key 'flreconstruct.variantService' will ignore meta 'flreconstruct::section' !
+[warning:datatools::properties& datatools::multi_properties::add_impl2(const string&, const string&):534] Key 'flreconstruct.services' will ignore meta 'flreconstruct::section' !
+[warning:datatools::properties& datatools::multi_properties::add_impl2(const string&, const string&):534] Key 'flreconstruct.pipeline' will ignore meta 'flreconstruct::section' !
+[warning:void charge2energy_module::parse_calibration_params(std::string, std::vector<std::vector<double> >&):205] OMs without calibration parameters will be skipped in energy calculation
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 0 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 10000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 20000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 30000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 40000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 50000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 60000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 70000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 80000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 90000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 100000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 110000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 120000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 130000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 140000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 150000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 160000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 170000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 180000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 190000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 200000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 210000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 220000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 230000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 240000 processed
+[information:virtual dpp::base_module::process_status charge2energy_module::process(datatools::things&):126] Event no. 250000 processed
+[notice:falaise::exit_code FLReconstruct::do_pipeline(const FLReconstruct::FLReconstructParams&):260] Number of input data records     = 257359
+[notice:falaise::exit_code FLReconstruct::do_pipeline(const FLReconstruct::FLReconstructParams&):261] Number of processed data records = 257359
+[notice:falaise::exit_code FLReconstruct::do_pipeline(const FLReconstruct::FLReconstructParams&):262] Number of output data records    = 257359

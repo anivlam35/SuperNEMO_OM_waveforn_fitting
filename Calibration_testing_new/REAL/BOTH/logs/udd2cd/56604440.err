@@ -1,0 +1,18 @@
+Error in cling::AutoLoadingVisitor::InsertIntoAutoLoadingState:
+   Missing FileEntry for brio/detail/TArrayCMod.h
+   requested to autoload type TArrayCMod
+Error in cling::AutoLoadingVisitor::InsertIntoAutoLoadingState:
+   Missing FileEntry for brio/detail/brio_record.h
+   requested to autoload type brio_record
+[trace:geomtools::i_object_3d::handle_type geomtools::shape_factory::create(const string&, const string&, const datatools::properties&):89] Shape factory now stores object='calorimeter_main_scin_block'
+[trace:geomtools::i_object_3d::handle_type geomtools::shape_factory::create(const string&, const string&, const datatools::properties&):89] Shape factory now stores object='calorimeter_8inch_scin_block_extrusion'
+[trace:geomtools::i_object_3d::handle_type geomtools::shape_factory::create(const string&, const string&, const datatools::properties&):89] Shape factory now stores object='calorimeter_8inch_scin_block_extruded'
+[trace:geomtools::i_object_3d::handle_type geomtools::shape_factory::create(const string&, const string&, const datatools::properties&):89] Shape factory now stores object='calorimeter_5inch_scin_block_extrusion'
+[trace:geomtools::i_object_3d::handle_type geomtools::shape_factory::create(const string&, const string&, const datatools::properties&):89] Shape factory now stores object='calorimeter_5inch_scin_block_extruded'
+[warning:virtual void snemo::processing::pcd2cd_module::initialize(const datatools::properties&, datatools::service_manager&, dpp::module_handle_dict_type&):100] no calorimeter energy calibration method provided
+[notice:virtual void snemo::processing::pcd2cd_module::initialize(const datatools::properties&, datatools::service_manager&, dpp::module_handle_dict_type&):130] calorimeter time calibration method = 't0_table'
+[notice:virtual void snemo::processing::pcd2cd_module::initialize(const datatools::properties&, datatools::service_manager&, dpp::module_handle_dict_type&):142] `- 432 entries parsed in '/sps/nemo/scratch/granjon/UDD-2-PTD/calo-t0-fwmeas-manu-v2-normalised.txt'
+[notice:virtual void snemo::processing::pcd2cd_module::initialize(const datatools::properties&, datatools::service_manager&, dpp::module_handle_dict_type&):201] no tracker time calibration method provided
+[notice:virtual void snemo::processing::pcd2cd_module::initialize(const datatools::properties&, datatools::service_manager&, dpp::module_handle_dict_type&):214] tracker radius calibration method = 'manu'
+[notice:virtual void snemo::processing::pcd2cd_module::initialize(const datatools::properties&, datatools::service_manager&, dpp::module_handle_dict_type&):231] tracker height calibration method = 'linear_r5r6'
+[2026-08-17T11:54:51.972] error: *** JOB 56604440 ON ccwslurm0215 CANCELLED AT 2026-08-17T11:54:51 DUE to SIGNAL Terminated ***

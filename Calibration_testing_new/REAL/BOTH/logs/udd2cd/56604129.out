@@ -1,0 +1,27 @@
+**********************************************************************
+*                         SLURM Batch System                         *
+*              IN2P3 Computing Centre, Villeurbanne FR               *
+**********************************************************************
+* Date:                 Mon Aug 17 11:48:36 AM CEST 2026
+* Job name:             UDD2CD_2011
+* Job id:               56604129
+* User:                 ikovalen
+* Account:              nemo
+* Submit host:          cca019
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0373
+* Operating System:     Red Hat Enterprise Linux release 9.8 (Plow)
+* Architecture:         x86_64
+**********************************************************************
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+Date: Mon Aug 17 11:48:36 AM CEST 2026
+Job informations can be found using these commands:
+Accounting:
+sacct -j 56604129
+Efficiency:
+seff 56604129
+****************************************************************

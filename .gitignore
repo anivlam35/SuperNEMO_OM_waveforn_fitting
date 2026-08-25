@@ -4,3 +4,5 @@ Commissioning/ReadRED/build/
 *.root
 *.root
 *.gch
+*.brio
+Calibration_testing_new/REAL/BOTH/logs/cd2ptd/

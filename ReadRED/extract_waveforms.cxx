@@ -17,6 +17,8 @@
 #include <snfee/data/calo_digitized_hit.h>
 #include <snfee/data/tracker_digitized_hit.h>
 
+#include <unordered_set>
+
 const int WAVEFORMS_NEEDED = 10;
 
 int main (int argc, char *argv[])
@@ -30,7 +32,11 @@ int main (int argc, char *argv[])
 	{
 	  if (arg=="-i" || arg=="--input")
 	    input_filename = std::string(argv[++iarg]);
+	else if (arg == "-e" || arg == "--event-list")
+    event_list_filename = std::string(argv[++iarg]);
 
+else if (arg == "-o" || arg == "--output")
+    output_filename = std::string(argv[++iarg]);
 	  else if (arg=="-h" || arg=="--help")
 	    {
 	      std::cout << std::endl;
@@ -54,6 +60,53 @@ int main (int argc, char *argv[])
     }
 
   snfee::initialize();
+
+std::unordered_set<int32_t> selected_events;
+
+if (!event_list_filename.empty()) {
+
+    TFile *event_list_file =
+        TFile::Open(event_list_filename.c_str(), "READ");
+
+    if (!event_list_file || event_list_file->IsZombie()) {
+        std::cerr << "*** cannot open event list file: "
+                  << event_list_filename << std::endl;
+        return 1;
+    }
+
+    TTree *event_list_tree = nullptr;
+    event_list_file->GetObject("events", event_list_tree);
+
+    if (!event_list_tree) {
+        std::cerr << "*** cannot find TTree 'events' in "
+                  << event_list_filename << std::endl;
+        event_list_file->Close();
+        delete event_list_file;
+        return 1;
+    }
+
+    int32_t list_event_id;
+
+    event_list_tree->SetBranchAddress("event_id", &list_event_id);
+
+    for (Long64_t i = 0; i < event_list_tree->GetEntries(); ++i) {
+        event_list_tree->GetEntry(i);
+        selected_events.insert(list_event_id);
+    }
+
+    event_list_file->Close();
+    delete event_list_file;
+
+    std::cout << "Loaded "
+              << selected_events.size()
+              << " events from "
+              << event_list_filename
+              << std::endl;
+}
+else {
+    std::cout << "No event list specified. Processing all events."
+              << std::endl;
+}
 
   /// Configuration for raw data reader
   snfee::io::multifile_data_reader::config_type reader_cfg;
@@ -112,6 +165,9 @@ int main (int argc, char *argv[])
       // Event number
       red_event_id = red.get_event_id();
 
+	if (!event_list_filename.empty() && selected_events.find(red_event_id) == selected_events.end()) {
+    		continue;	
+	}
       // Reference time from trigger
       const snfee::data::timestamp & red_reference_time = red.get_reference_time();
       // snfee::data::timestamp is a generic class

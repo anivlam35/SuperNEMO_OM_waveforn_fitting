@@ -1,0 +1,47 @@
+**********************************************************************
+*                         SLURM Batch System                         *
+*              IN2P3 Computing Centre, Villeurbanne FR               *
+**********************************************************************
+* Date:                 Fri Aug 21 02:55:19 PM CEST 2026
+* Job name:             both_calibcuts
+* Job id:               56839046
+* User:                 ikovalen
+* Account:              nemo
+* Submit host:          ccwislurm0002
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0080
+* Operating System:     Red Hat Enterprise Linux release 9.8 (Plow)
+* Architecture:         x86_64
+**********************************************************************
+==========================================
+Calibration cuts
+Job ID : 56839046
+Array  : 1
+Input  : /sps/nemo/scratch/ikovalen/OM_waveform_fitting/Calibration_testing_new/REAL/BOTH/results/ptd/snemo_run-2011_udd_PTD.brio
+Output : /sps/nemo/scratch/ikovalen/OM_waveform_fitting/Calibration_testing_new/REAL/BOTH/results/calibrationcuts/snemo_run-2011_udd_PTD_calibrationcuts.root
+==========================================
+flreconstruct: /sps/nemo/sw/redhat-9-x86_64/snsw/opt2/falaise-5.1.13b/bin/flreconstruct
+flreconstruct 5.1.13
+
+Copyright (C) 2013-2022 SuperNEMO Collaboration
+
+flreconstruct uses the following external libraries:
+* Falaise : 5.1.13
+* Bayeux  : 3.5.6
+* Boost   : 107500
+
+
+Working directory: /tmp/calibcuts_56839046_1_nGUA06
+Done: /sps/nemo/scratch/ikovalen/OM_waveform_fitting/Calibration_testing_new/REAL/BOTH/results/calibrationcuts/snemo_run-2011_udd_PTD_calibrationcuts.root
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+Date: Fri Aug 21 03:00:12 PM CEST 2026
+Job informations can be found using these commands:
+Accounting:
+sacct -j 56839046
+Efficiency:
+seff 56839046
+****************************************************************

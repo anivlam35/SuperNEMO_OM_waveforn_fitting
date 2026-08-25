@@ -1,0 +1,41 @@
+**********************************************************************
+*                         SLURM Batch System                         *
+*              IN2P3 Computing Centre, Villeurbanne FR               *
+**********************************************************************
+* Date:                 Mon Aug 17 02:07:52 PM CEST 2026
+* Job name:             both_calib
+* Job id:               56610357
+* User:                 ikovalen
+* Account:              nemo
+* Submit host:          ccwislurm0001
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0036
+* Operating System:     Red Hat Enterprise Linux release 9.8 (Plow)
+* Architecture:         x86_64
+**********************************************************************
+===== DEBUG =====
+PWD        = /sps/nemo/scratch/ikovalen/OM_waveform_fitting/Calibration_testing_new/REAL/BOTH
+SCRIPT_DIR = /var/spool/slurmd/job56610357
+PROJECT_DIR= /sps/nemo/scratch/ikovalen/OM_waveform_fitting/Calibration_testing_new/REAL/BOTH
+PTD_LIST   = /sps/nemo/scratch/ikovalen/OM_waveform_fitting/Calibration_testing_new/REAL/BOTH/lists/ptd.txt
+INPUT_PTD  = /sps/nemo/scratch/ikovalen/OM_waveform_fitting/Calibration_testing_new/REAL/BOTH/results/ptd
+C2E_DIR    = /sps/nemo/scratch/ikovalen/OM_waveform_fitting/Calibration_testing_new/REAL/BOTH/results/c2e
+SLURM_ARRAY_TASK_ID = 1
+=================
+==========================================
+Calibration
+Input : /sps/nemo/scratch/ikovalen/OM_waveform_fitting/Calibration_testing_new/REAL/BOTH/results/ptd/snemo_run-2011_udd_PTD.brio
+Output: /sps/nemo/scratch/ikovalen/OM_waveform_fitting/Calibration_testing_new/REAL/BOTH/results/c2e/./snemo_run-2011_udd_PTD_c2e.brio
+==========================================
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+Date: Mon Aug 17 02:07:52 PM CEST 2026
+Job informations can be found using these commands:
+Accounting:
+sacct -j 56610357
+Efficiency:
+seff 56610357
+****************************************************************
